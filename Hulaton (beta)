@@ -1,0 +1,110 @@
+import pygame
+import sys
+import json
+from pygame.locals import *
+
+pygame.init()
+
+# Screen setup
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Ulysses' Quest")
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+# Player attributes
+player_pos = [100, HEIGHT - 100]
+player_speed = 5
+health = 100
+inventory = {"items": [], "gear": [], "weapons": []}
+
+# Load images
+# Add actual file paths for these images.
+player_img = pygame.Surface((50, 50))  # Placeholder for player sprite
+player_img.fill((0, 128, 255))
+enemy_img = pygame.Surface((40, 40))  # Placeholder for enemy sprite
+enemy_img.fill((255, 0, 0))
+
+# Font setup
+font = pygame.font.SysFont("Arial", 24)
+
+# Enemy attributes
+enemy_pos = [400, HEIGHT - 100]
+enemy_health = 50
+
+# Save/Load functions
+def save_game():
+    data = {
+        "player_pos": player_pos,
+        "health": health,
+        "inventory": inventory
+    }
+    with open("savefile.json", "w") as f:
+        json.dump(data, f)
+    print("Game saved!")
+
+def load_game():
+    global player_pos, health, inventory
+    try:
+        with open("savefile.json", "r") as f:
+            data = json.load(f)
+            player_pos = data["player_pos"]
+            health = data["health"]
+            inventory = data["inventory"]
+        print("Game loaded!")
+    except FileNotFoundError:
+        print("No save file found.")
+
+# Game loop
+def main():
+    global player_pos, health
+
+    clock = pygame.time.Clock()
+    running = True
+    while running:
+        screen.fill(WHITE)
+
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == KEYDOWN:
+                if event.key == K_s:  # Press 'S' to save the game
+                    save_game()
+                elif event.key == K_l:  # Press 'L' to load the game
+                    load_game()
+
+        # Movement
+        keys = pygame.key.get_pressed()
+        if keys[K_LEFT]:
+            player_pos[0] -= player_speed
+        if keys[K_RIGHT]:
+            player_pos[0] += player_speed
+        if keys[K_UP]:
+            player_pos[1] -= player_speed
+        if keys[K_DOWN]:
+            player_pos[1] += player_speed
+
+        # Simple collision detection (example)
+        if pygame.Rect(player_pos, (50, 50)).colliderect(pygame.Rect(enemy_pos, (40, 40))):
+            health -= 1  # Taking damage on contact with enemy
+
+        # Draw characters and stats
+        screen.blit(player_img, player_pos)
+        screen.blit(enemy_img, enemy_pos)
+        health_text = font.render(f"Health: {health}", True, BLACK)
+        screen.blit(health_text, (10, 10))
+
+        # Display inventory
+        inventory_text = font.render(f"Inventory: {inventory}", True, BLACK)
+        screen.blit(inventory_text, (10, 40))
+
+        pygame.display.flip()
+        clock.tick(30)
+
+# Run the game
+if __name__ == "__main__":
+    main()
